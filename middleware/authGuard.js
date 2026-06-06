@@ -1,7 +1,7 @@
-// middleware/authGuard.js — JWT verification middleware
-// Stateless — no DB call needed. Decision: d1a2b3c4-0001
+// middleware/authGuard.js — Session verification middleware
+// Stateful — looks up server-side session store.
 
-const { verifyToken } = require('../auth');
+const { getSession } = require('../auth');
 
 /**
  * Express middleware that verifies the Bearer JWT token.
