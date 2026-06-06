@@ -247,3 +247,6 @@ Covenant's Archaeology Mode will narrate the full decision history behind any pa
 ---
 
 *This repository is intentionally simple. The complexity lives in Covenant, not here.*
+
+## Local smoke test
+Run npm install and npm start to launch the demo API locally.
