@@ -250,3 +250,6 @@ Covenant's Archaeology Mode will narrate the full decision history behind any pa
 
 ## Local smoke test
 Run npm install and npm start to launch the demo API locally.
+
+## Running locally
+Use npm test to run the local smoke checks before demo pushes.
