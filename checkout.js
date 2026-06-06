@@ -29,6 +29,7 @@ router.get('/step/:stepNumber', (req, res) => {
     });
   }
 
+
   return res.json({
     step: stepNumber,
     label: STEPS[stepNumber],
