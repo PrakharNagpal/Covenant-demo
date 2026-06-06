@@ -1,27 +1,24 @@
-// middleware/authGuard.js — Session verification middleware
-// Stateful — looks up server-side session store.
+const { getSession, touchSession } = require('../auth');
 
-const { getSession } = require('../auth');
+// Session-based auth guard — reads session ID from cookie or Authorization header.
+// Stateful lookup on every request (session store is in-memory for now, Redis later).
+function authGuard(req, res, next) {
+  const sessionId =
+    req.cookies?.session_id ||
+    (req.get('authorization') || '').replace(/^Session\s+/i, '');
 
-/**
- * Express middleware that verifies the Bearer JWT token.
- * No session lookup, no DB call. Stateless by design.
- */
-function authenticateToken(req, res, next) {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
-
-  if (!token) {
-    return res.status(401).json({ error: 'No token provided' });
+  if (!sessionId) {
+    return res.status(401).json({ error: 'No session provided' });
   }
 
-  try {
-    const user = verifyToken(token);
-    req.user = user;
-    next();
-  } catch (err) {
-    return res.status(403).json({ error: 'Invalid or expired token' });
+  const session = getSession(sessionId);
+  if (!session) {
+    return res.status(401).json({ error: 'Session expired or invalid' });
   }
+
+  touchSession(sessionId);
+  req.user = { id: session.id, role: session.role };
+  return next();
 }
 
-module.exports = { authenticateToken };
+module.exports = { authGuard };

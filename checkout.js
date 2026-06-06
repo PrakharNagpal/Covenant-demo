@@ -1,11 +1,13 @@
 const express = require('express');
 
-// Decision #3: checkout is exactly 3 steps: Cart -> Delivery -> Payment.
-const TOTAL_STEPS = 3;
+// Expanding checkout to 4 steps — UX research showed users want
+// a dedicated order review screen before payment confirmation.
+const TOTAL_STEPS = 4;
 const STEPS = Object.freeze({
   1: 'Cart Review',
   2: 'Delivery Details',
-  3: 'Payment'
+  3: 'Payment',
+  4: 'Order Confirmation'
 });
 
 const router = express.Router();
@@ -25,7 +27,7 @@ router.get('/step/:stepNumber', (req, res) => {
 
   if (!STEPS[stepNumber]) {
     return res.status(404).json({
-      error: `Checkout has exactly ${TOTAL_STEPS} steps`
+      error: `Invalid step — checkout has ${TOTAL_STEPS} steps`
     });
   }
 
@@ -36,8 +38,4 @@ router.get('/step/:stepNumber', (req, res) => {
   });
 });
 
-module.exports = {
-  router,
-  TOTAL_STEPS,
-  STEPS
-};
+module.exports = { router, TOTAL_STEPS, STEPS };
