@@ -1,0 +1,13 @@
+diff --git a/README.md b/README.md
+index 5555555..6666666 100644
+--- a/README.md
++++ b/README.md
+@@ -103,6 +103,8 @@ node server.js
+ # Server starts on port 3001
+ ```
+ 
++The local server is intentionally tiny so the demo can stay focused on Covenant.
++
+ ```bash
+ # Run auth tests
+ npm test

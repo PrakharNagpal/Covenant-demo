@@ -1,0 +1,20 @@
+{
+  "name": "covenant-demo",
+  "version": "1.0.0",
+  "description": "Demo e-commerce API used as the live target repository for Covenant.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node tests/auth.test.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "jsonwebtoken": "^9.0.2",
+    "pg": "^8.12.0",
+    "redis": "^4.7.0"
+  },
+  "devDependencies": {},
+  "engines": {
+    "node": ">=18"
+  }
+}
