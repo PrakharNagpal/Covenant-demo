@@ -1,23 +1,22 @@
-const { verifyToken } = require('../auth');
+const { verifySession } = require('../auth');
 
-// Decision #1: stateless JWT auth. No database lookup and no session lookup happen here.
+// Stateful session auth. This requires a server-side session lookup on every request.
 function authGuard(req, res, next) {
-  const header = req.get('authorization') || '';
-  const [scheme, token] = header.split(' ');
+  const sessionId = req.cookies?.session_id || req.get('x-session-id');
 
-  if (scheme !== 'Bearer' || !token) {
-    return res.status(401).json({ error: 'Bearer token required' });
+  if (!sessionId) {
+    return res.status(401).json({ error: 'Session required' });
   }
 
   try {
-    const decoded = verifyToken(token);
+    const session = verifySession(sessionId);
     req.user = {
-      id: decoded.sub,
-      role: decoded.role
+      id: session.sub,
+      role: session.role
     };
     return next();
   } catch (err) {
-    return res.status(401).json({ error: 'Invalid or expired token' });
+    return res.status(401).json({ error: 'Invalid or expired session' });
   }
 }
 

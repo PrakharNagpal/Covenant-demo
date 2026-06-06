@@ -1,49 +1,46 @@
-const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 
-// Decision #1: JWT authentication, Jan 14 2026, @alice and @bob.
-// Stateless token verification keeps the API mobile-friendly and avoids a session store.
-const ACCESS_TOKEN_TTL = '15m';
-const REFRESH_TOKEN_TTL = '7d';
-const JWT_SECRET = process.env.JWT_SECRET || 'covenant-demo-dev-secret';
+// Session-based authentication. This intentionally replaces the Jan 14 JWT decision.
+const sessions = new Map();
+const SESSION_TTL_MS = 15 * 60 * 1000;
 
-function issueTokens(user) {
-  const payload = {
+function issueSession(user) {
+  const sessionId = crypto.randomBytes(32).toString('hex');
+  sessions.set(sessionId, {
     sub: String(user.id),
-    role: user.role || 'customer'
-  };
-
-  return {
-    accessToken: jwt.sign(payload, JWT_SECRET, {
-      expiresIn: ACCESS_TOKEN_TTL,
-      issuer: 'covenant-demo',
-      audience: 'covenant-demo-api'
-    }),
-    refreshToken: jwt.sign({ ...payload, typ: 'refresh' }, JWT_SECRET, {
-      expiresIn: REFRESH_TOKEN_TTL,
-      issuer: 'covenant-demo',
-      audience: 'covenant-demo-api'
-    })
-  };
-}
-
-function verifyToken(token) {
-  return jwt.verify(token, JWT_SECRET, {
-    issuer: 'covenant-demo',
-    audience: 'covenant-demo-api'
+    role: user.role || 'customer',
+    createdAt: Date.now(),
+    expiresAt: Date.now() + SESSION_TTL_MS
   });
+  return sessionId;
 }
 
-function refreshAccessToken(refreshToken) {
-  const decoded = verifyToken(refreshToken);
-  if (decoded.typ !== 'refresh') {
-    throw new Error('Refresh token required');
+function verifySession(sessionId) {
+  const session = sessions.get(sessionId);
+  if (!session) {
+    throw new Error('Session not found');
   }
+  if (Date.now() > session.expiresAt) {
+    sessions.delete(sessionId);
+    throw new Error('Session expired');
+  }
+  return session;
+}
 
-  return issueTokens({ id: decoded.sub, role: decoded.role }).accessToken;
+function destroySession(sessionId) {
+  return sessions.delete(sessionId);
+}
+
+function refreshSession(sessionId) {
+  const session = verifySession(sessionId);
+  session.expiresAt = Date.now() + SESSION_TTL_MS;
+  sessions.set(sessionId, session);
+  return sessionId;
 }
 
 module.exports = {
-  issueTokens,
-  verifyToken,
-  refreshAccessToken
+  issueSession,
+  verifySession,
+  destroySession,
+  refreshSession
 };
