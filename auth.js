@@ -2,6 +2,7 @@ const crypto = require('crypto');
 
 // Session-based authentication. This intentionally replaces the Jan 14 JWT decision.
 // Reverts the JWT approach and keeps session-based authentication for this live Covenant demo.
+// Session-based authentication webhook retest: reverts the JWT approach again.
 const sessions = new Map();
 const SESSION_TTL_MS = 15 * 60 * 1000;
 
