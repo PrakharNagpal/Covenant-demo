@@ -1,8 +1,8 @@
-// auth.js — Session-based authentication
-// Switching to sessions for better token revocation support.
-// Reverts the JWT approach.
+// auth.js — JWT authentication (decided: Jan 14 2026, @alice + @bob)
+// Decision: Use JWT for stateless auth. Sessions rejected due to operational
+// complexity of shared session store. See Decision Ledger: d1a2b3c4-0001
 
-const crypto = require('crypto');
+const jwt = require('jsonwebtoken');
 
 const SECRET = process.env.JWT_SECRET || 'covenant-demo-secret';
 const ACCESS_EXPIRY = '15m';
