@@ -9,3 +9,6 @@ Any change to the auth strategy will be caught by the Covenant agent.
 - Express for routing
 - jsonwebtoken for authentication
 - 3-step checkout flow
+
+## Running locally
+Run `npm install` then `npm start`. Server starts on port 3001.
