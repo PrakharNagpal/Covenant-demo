@@ -1,66 +1,45 @@
-// auth.js — Session-based authentication
-// Switching to sessions for better token revocation support.
-// Reverts the JWT approach.
-
 const crypto = require('crypto');
 
-const SECRET = process.env.JWT_SECRET || 'covenant-demo-secret';
-const ACCESS_EXPIRY = '15m';
-const REFRESH_EXPIRY = '7d';
+// Switching to server-side sessions — better token revocation and
+// simpler mobile handling than managing JWT expiry on the client.
+const sessions = new Map();
+const SESSION_TTL_MS = 15 * 60 * 1000; // 15 minutes
 
-/**
- * Signs a new JWT access token for the given user payload.
- * Token is stateless — no server-side state stored.
- */
-function signAccessToken(payload) {
-  return jwt.sign(payload, SECRET, { expiresIn: ACCESS_EXPIRY });
+function createSession(user) {
+  const sessionId = crypto.randomBytes(32).toString('hex');
+  sessions.set(sessionId, {
+    id: String(user.id),
+    role: user.role || 'customer',
+    createdAt: Date.now(),
+    expiresAt: Date.now() + SESSION_TTL_MS
+  });
+  return sessionId;
 }
 
-/**
- * Signs a long-lived refresh token.
- * Stored client-side. Revocation handled via a blocklist in Redis (short-lived).
- */
-function signRefreshToken(payload) {
-  return jwt.sign(payload, SECRET, { expiresIn: REFRESH_EXPIRY });
-}
-
-/**
- * Verifies a JWT token. Returns the decoded payload or throws.
- */
-function verifyToken(token) {
-  return jwt.verify(token, SECRET);
-}
-
-/**
- * POST /auth/login
- * Returns a signed JWT access token + refresh token.
- */
-function login(req, res) {
-  const { username, password } = req.body;
-  // Demo: accept any username/password
-  if (!username || !password) {
-    return res.status(400).json({ error: 'Username and password required' });
+function getSession(sessionId) {
+  const session = sessions.get(sessionId);
+  if (!session) return null;
+  if (Date.now() > session.expiresAt) {
+    sessions.delete(sessionId);
+    return null;
   }
-  const user = { id: 'usr_demo_001', username };
-  const accessToken = signAccessToken(user);
-  const refreshToken = signRefreshToken({ id: user.id });
-  res.json({ accessToken, refreshToken, tokenType: 'Bearer' });
+  return session;
 }
 
-/**
- * POST /auth/refresh
- * Accepts a valid refresh token, returns a new access token.
- */
-function refresh(req, res) {
-  const { refreshToken } = req.body;
-  if (!refreshToken) return res.status(401).json({ error: 'Refresh token required' });
-  try {
-    const payload = verifyToken(refreshToken);
-    const newAccessToken = signAccessToken({ id: payload.id });
-    res.json({ accessToken: newAccessToken, tokenType: 'Bearer' });
-  } catch (err) {
-    res.status(401).json({ error: 'Invalid or expired refresh token' });
+function destroySession(sessionId) {
+  return sessions.delete(sessionId);
+}
+
+function touchSession(sessionId) {
+  const session = sessions.get(sessionId);
+  if (session) {
+    session.expiresAt = Date.now() + SESSION_TTL_MS;
   }
 }
 
-module.exports = { signAccessToken, signRefreshToken, verifyToken, login, refresh };
+module.exports = {
+  createSession,
+  getSession,
+  destroySession,
+  touchSession
+};
